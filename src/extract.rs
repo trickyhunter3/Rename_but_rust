@@ -104,10 +104,11 @@ pub fn iter_over_all_files(root_path: &str){
                 let current_episode_number = check_files_extract_number_from_string(current_file_name);
                 let current_season_number = extract_season_number(current_series_name_and_season[1]);
                 let current_file_extention = get_file_extention(current_file_name);
-                //println!("{}", current_entry.path().display());
                 if !filter_extention(current_file_extention){
-                    //println!("file_name: {0}, episode_number: {1}, season_number: {2}, file_extention: {3}", current_file_name, current_episode_number, current_season_number, current_file_extention);
-                    println!("{}", is_file_name_valid(current_file_name, current_series_name_and_season[0], current_season_number, current_episode_number, current_file_extention));
+                    if !is_file_name_valid(current_file_name, current_series_name_and_season[0], current_season_number, current_episode_number, current_file_extention){
+                        println!("{}", current_file_name);
+                    }
+                    //println!("{}", is_file_name_valid(current_file_name, current_series_name_and_season[0], current_season_number, current_episode_number, current_file_extention));
                 }
             }
         }
