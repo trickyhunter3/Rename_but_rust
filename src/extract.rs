@@ -72,6 +72,22 @@ fn is_hidden(entry: &DirEntry) -> bool {
          .unwrap_or(false)
 }
 
+fn episode_helper_create(number: i32) -> String{
+    if number / 10 == 0{
+        return "E0".to_string();
+    }
+
+    return "E".to_string();
+}
+
+fn season_helper_create(number: i32) -> String{
+    if number / 10 == 0{
+        return "S0".to_string();
+    }
+
+    return "S".to_string();
+}
+
 pub fn iter_over_all_files(root_path: &str){
     let walker = WalkDir::new(root_path).into_iter();
     if WalkDir::new(root_path).into_iter().count() > 1 {
@@ -90,16 +106,28 @@ pub fn iter_over_all_files(root_path: &str){
                 let current_file_extention = get_file_extention(current_file_name);
                 //println!("{}", current_entry.path().display());
                 if !filter_extention(current_file_extention){
-                    println!("file_name: {0}, episode_number: {1}, season_number: {2}, file_extention: {3}", current_file_name, current_episode_number, current_season_number, current_file_extention);
-                    is_file_name_valid(current_file_name, check_files_extract_number_from_string(current_file_name), current_series_name_and_season[0], current_season_number, current_episode_number, current_file_extention);
+                    //println!("file_name: {0}, episode_number: {1}, season_number: {2}, file_extention: {3}", current_file_name, current_episode_number, current_season_number, current_file_extention);
+                    println!("{}", is_file_name_valid(current_file_name, current_series_name_and_season[0], current_season_number, current_episode_number, current_file_extention));
                 }
             }
         }
     }
 }
 
-fn is_file_name_valid(file_name: &str, file_name_number: i32, series_name: &str, season_number: i32, episode_number: i32, file_extention: &str) -> bool{
-    if episode_number == -1{
+fn is_name_format_correct(file_name: &str, series_name: &str, season_number: i32, episode_number: i32, file_extention: &str, season_helper: String, episode_helper: String, subtitle_helper: &str) -> bool{
+    //normal name with 00 example: "Fullmetal Alchemist Brotherhood - S01E01.mp4"
+    if file_name == series_name.to_string() + &" - ".to_string() + &season_helper + &season_number.to_string() + &episode_helper + &episode_number.to_string() + subtitle_helper + &".".to_string() + file_extention{
+        return true;
+    }
+    //two episodes in one video: "Fullmetal Alchemist Brotherhood - S01E01-E02.mp4" TODO:will not work on 9-10?
+    if file_name == series_name.to_string() + &" - ".to_string() + &season_helper + &season_number.to_string() + &episode_helper + &(episode_number-1).to_string() + &"-".to_string() + &episode_helper + &(episode_number).to_string() + subtitle_helper + &".".to_string() + file_extention{
+        return true;
+    }
+    return false;
+}
+
+fn is_file_name_valid(file_name: &str, series_name: &str, season_number: i32, episode_number: i32, file_extention: &str) -> bool{
+    if episode_number == -1 || season_number == -1{
         return false;
     }
     let mut subtitle_helper = "";
@@ -110,17 +138,10 @@ fn is_file_name_valid(file_name: &str, file_name_number: i32, series_name: &str,
         subtitle_helper = ".eng";
     }
 
-    return true;
+    let episode_helper = episode_helper_create(episode_number);//E0 or E
+    let season_helper = season_helper_create(season_number);//S0 or S
+
+    return is_name_format_correct(file_name, series_name, season_number, episode_number, file_extention, season_helper, episode_helper, subtitle_helper);
 }
 
-/* 
-fn helper_create(number: i32) -> String{
-    let mut helper: String = String::new();
-    let mut local_number = number;
-    while local_number / 10 != 0{
-        helper.push_str("0");
-        local_number /= 10;
-    }
-    return helper;
-}
-*/
+
