@@ -1,5 +1,4 @@
 use walkdir::{DirEntry, WalkDir};
-
 use regex::Regex;
 
 fn check_files_extract_number_from_string(file_name: &str) -> i32{
@@ -88,7 +87,8 @@ fn season_helper_create(number: i32) -> String{
     return "S".to_string();
 }
 
-pub fn iter_over_all_files(root_path: &str){
+pub fn iter_over_all_files(root_path: &str) -> bool{
+    let mut is_everything_correct: bool = true;
     let walker = WalkDir::new(root_path).into_iter();
     if WalkDir::new(root_path).into_iter().count() > 1 {
         for entry in walker.filter_entry(|e| !is_hidden(e)){
@@ -106,6 +106,7 @@ pub fn iter_over_all_files(root_path: &str){
                 let current_file_extention = get_file_extention(current_file_name);
                 if !filter_extention(current_file_extention){
                     if !is_file_name_valid(current_file_name, current_series_name_and_season[0], current_season_number, current_episode_number, current_file_extention){
+                        is_everything_correct = false;
                         println!("{}", current_file_name);
                     }
                     //println!("{}", is_file_name_valid(current_file_name, current_series_name_and_season[0], current_season_number, current_episode_number, current_file_extention));
@@ -113,6 +114,7 @@ pub fn iter_over_all_files(root_path: &str){
             }
         }
     }
+    return is_everything_correct;
 }
 
 fn is_name_format_correct(file_name: &str, series_name: &str, season_number: i32, episode_number: i32, file_extention: &str, season_helper: String, episode_helper: String, subtitle_helper: &str) -> bool{
