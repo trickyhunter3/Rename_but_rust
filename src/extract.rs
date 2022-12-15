@@ -96,7 +96,6 @@ pub fn iter_over_all_files(root_path: &str) -> bool{
         for entry in walker.filter_entry(|e| !is_hidden(e)){
             let current_entry = entry.unwrap();
             
-            let _a = current_entry.file_type().is_dir();
             if current_entry.file_type().is_dir(){
                 println!("Entering Directory: {}", current_entry.file_name().to_str().unwrap());
             }
