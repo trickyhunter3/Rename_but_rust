@@ -89,8 +89,10 @@ fn season_helper_create(number: i32) -> String{
 
 pub fn iter_over_all_files(root_path: &str) -> bool{
     let mut is_everything_correct: bool = true;
+    let mut is_there_a_folder = false;
     let walker = WalkDir::new(root_path).into_iter();
     if WalkDir::new(root_path).into_iter().count() > 1 {
+        is_there_a_folder = true;
         for entry in walker.filter_entry(|e| !is_hidden(e)){
             let current_entry = entry.unwrap();
             
@@ -109,10 +111,13 @@ pub fn iter_over_all_files(root_path: &str) -> bool{
                         is_everything_correct = false;
                         println!("{}", current_file_name);
                     }
-                    //println!("{}", is_file_name_valid(current_file_name, current_series_name_and_season[0], current_season_number, current_episode_number, current_file_extention));
                 }
             }
         }
+    }
+    if !is_there_a_folder
+    {
+        println!("Folder is empty/non existent");
     }
     return is_everything_correct;
 }
@@ -133,18 +138,59 @@ fn is_file_name_valid(file_name: &str, series_name: &str, season_number: i32, ep
     if episode_number == -1 || season_number == -1{
         return false;
     }
-    let mut subtitle_helper = "";
-    //TODO helper for episodes
-    //let mut episode_helper: String = String::new();//E01 or E0001
-    //let mut season_helper: String = String::new();//S01 or S0001
+    let subtitle_helper;
     if file_extention == "ass" {
         subtitle_helper = ".eng";
     }
+    else{
+        subtitle_helper = "";
+    }
 
-    let episode_helper = episode_helper_create(episode_number);//E0 or E
-    let season_helper = season_helper_create(season_number);//S0 or S
+    let episode_helper = episode_helper_create(episode_number);//E or E0
+    let season_helper = season_helper_create(season_number);//S or S0
 
     return is_name_format_correct(file_name, series_name, season_number, episode_number, file_extention, season_helper, episode_helper, subtitle_helper);
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn get_series_name_and_season_check(){
+        let path = "C:\\Code\\hello\\86 - Eighty Six\\Season 1\\86 - Eighty Six - S01E02.txt";
+        let series_and_name = get_series_name_and_season(path, 3);
+        assert_eq!(series_and_name[0], "86 - Eighty Six");
+        assert_eq!(series_and_name[1], "Season 1");
 
+        let path2 = "C:\\Code\\hello\\Do It Yourself!!\\Season 3\\Do It Yourself!! - S03E06.txt";
+        let series_and_name2 = get_series_name_and_season(path2, 3);
+        assert_eq!(series_and_name2[0], "Do It Yourself!!");
+        assert_eq!(series_and_name2[1], "Season 3");
+    }
+    #[test]
+    fn check_files_extract_number_from_string_check(){
+        let name = "86 - Eighty Six - S01E02.txt";
+        let name2 = "Do It Yourself!! - S03E06.txt";
+
+        assert_eq!(check_files_extract_number_from_string(name), 2);
+        assert_eq!(check_files_extract_number_from_string(name2), 6);
+
+    }
+    #[test]
+    fn extract_season_number_check(){
+        let season = "Season 1";
+        let season2 = "Season 3";
+        let season3 = "Season";
+
+        assert_eq!(extract_season_number(season), 1);
+        assert_eq!(extract_season_number(season2), 3);
+        assert_eq!(extract_season_number(season3), -1);
+    }
+    #[test]
+    fn get_file_extention_check(){
+        let name = "86 - Eighty Six - S01E02.txt";
+        let name2 = "Do It Yourself!! - S03E06.mkv";
+        assert_eq!(get_file_extention(name), "txt");
+        assert_eq!(get_file_extention(name2), "mkv");
+    }
+}
