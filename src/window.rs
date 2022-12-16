@@ -17,6 +17,9 @@ struct MyApp {
     root_path_anime: String,
     root_path_anime_not: String,
     user_path: String,
+    is_number_first: bool,
+    is_number_second: bool,
+    is_number_last: bool,
 }
 
 impl Default for MyApp {
@@ -25,6 +28,9 @@ impl Default for MyApp {
             root_path_anime: "G:\\AN\\Anime".to_owned(),
             root_path_anime_not: "G:\\AN\\Anime not".to_owned(),
             user_path: "".to_owned(),
+            is_number_first: false,
+            is_number_second: false,
+            is_number_last: false,
         }
     }
 }
@@ -43,6 +49,9 @@ impl eframe::App for MyApp {
                 //"G:\\AN\\Anime\\86 - Eighty Six\\Season 1\\86 - Eighty Six - S01E01.mkv"
                 extract::iter_rename_files(&self.user_path);
             }
+            ui.add(egui::Checkbox::new(&mut self.is_number_first, "is number first?"));
+            ui.add(egui::Checkbox::new(&mut self.is_number_second, "is number second?"));
+            ui.add(egui::Checkbox::new(&mut self.is_number_last, "is number last?"));
             if ui.button("Check Files").clicked(){ 
                 extract::iter_over_all_files_check_files(&self.root_path_anime);
                 extract::iter_over_all_files_check_files(&self.root_path_anime_not);

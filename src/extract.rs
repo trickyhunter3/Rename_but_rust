@@ -83,6 +83,23 @@ fn file_is_safe_to_change(file_depth: usize) -> bool{
     return  false;
 }
 
+fn extract_number_from_string_V1(file_name: &str, is_number_first: bool, is_number_second: bool, is_number_last: bool) -> i32{
+    let re = Regex::new(r"\d+").unwrap();
+    //search with regex only numbers inside a &str
+    let mut numbers_in_array = re.find_iter(file_name).collect::<Vec<_>>();
+    //preset numbers
+    if is_number_first{
+        return numbers_in_array[0].as_str().parse().unwrap();
+    }
+    if is_number_second{
+        return numbers_in_array[1].as_str().parse().unwrap();
+    }
+    if is_number_last{
+        return numbers_in_array[numbers_in_array.len() - 1].as_str().parse().unwrap();
+    }
+
+    return 1;
+}
 
 fn rename_file(full_file_name: &str, file_name: &str, series_name: &str, season_helper: String, season_number: i32, episode_helper: String, episode_number: i32, subtitle_helper: &str, file_extention: &str){
     let file_path = get_file_path_no_name(full_file_name);
