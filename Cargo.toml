@@ -9,5 +9,5 @@ edition = "2021"
 
 regex = "1.7.0"
 walkdir = "2.3.2"
-#egui = "0.20.1"
-#eframe = "0.20.1"
+egui = "0.20.1"
+eframe = "0.20.1"

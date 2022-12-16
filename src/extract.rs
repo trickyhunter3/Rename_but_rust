@@ -1,5 +1,86 @@
 use walkdir::{DirEntry, WalkDir};
 use regex::Regex;
+use std::fs;
+
+pub fn iter_over_all_files_check_files(root_path: &str) -> bool{
+    let mut is_everything_correct: bool = true;
+    let mut is_there_a_folder = false;
+    let walker = WalkDir::new(root_path).into_iter();
+    if WalkDir::new(root_path).into_iter().count() > 1 {
+        is_there_a_folder = true;
+        for entry in walker.filter_entry(|e| !is_hidden(e)){
+            let current_entry = entry.unwrap();
+            
+            if current_entry.file_type().is_dir(){
+                println!("Entering Directory: {}", current_entry.file_name().to_str().unwrap());
+            }
+            else {
+                let current_series_name_and_season: Vec<&str>  = get_series_name_and_season(current_entry.path().to_str().unwrap(), current_entry.depth());
+                let current_file_name = current_entry.file_name().to_str().unwrap();
+                let current_episode_number = check_files_extract_number_from_string(current_file_name);
+                let current_season_number = extract_season_number(current_series_name_and_season[1]);
+                let current_file_extention = get_file_extention(current_file_name);
+                if !filter_extention(current_file_extention){
+                    if !is_file_name_valid(current_file_name, current_series_name_and_season[0], current_season_number, current_episode_number, current_file_extention){
+                        is_everything_correct = false;
+                        println!("{}", current_file_name);
+                    }
+                }
+            }
+        }
+    }
+    if !is_there_a_folder
+    {
+        println!("Folder is empty/non existent");
+    }
+    return is_everything_correct;
+}
+//full_file_name: &str, series_name: &str, season_helper: String, season_number: i32, episode_helper: String, episode_number: i32
+
+pub fn iter_rename_files(folder_path: &str){
+    let walker = WalkDir::new(folder_path).into_iter();
+    if WalkDir::new(folder_path).into_iter().count() > 1 {
+        for entry in walker.filter_entry(|e| !is_hidden(e)){
+            let current_entry = entry.unwrap();
+
+            if !current_entry.file_type().is_dir(){
+                let current_series_name_and_season: Vec<&str>  = get_series_name_and_season(current_entry.path().to_str().unwrap(), current_entry.depth());
+                let current_file_name = current_entry.file_name().to_str().unwrap();
+                //rewrite extract number
+                let current_episode_number = check_files_extract_number_from_string(current_file_name);
+                let current_season_number = extract_season_number(current_series_name_and_season[1]);
+                let current_file_extention = get_file_extention(current_file_name);
+
+                if !filter_extention(current_file_extention){
+
+                }
+            }
+        }
+    }
+    else{
+        println!("Folder is empty/non existent");
+    }
+}
+
+
+fn rename_file(full_file_name: &str, file_name: &str, series_name: &str, season_helper: String, season_number: i32, episode_helper: String, episode_number: i32, subtitle_helper: &str, file_extention: &str){
+    let file_path = get_file_path_no_name(full_file_name);
+    let mut final_name: String = file_path + &series_name.to_string() + &" - ".to_string() + &season_helper + &season_number.to_string() + &episode_helper + &episode_number.to_string() + subtitle_helper + &".".to_string() + file_extention;
+    println!("{} --> {}", file_name, final_name);
+}
+
+fn get_file_path_no_name(full_file_name: &str) -> String{
+    let mut final_string: String = "".to_string();
+    let slash_seperator = full_file_name.split('\\');
+    let slash_vec: Vec<&str> = slash_seperator.collect();
+
+    let mut i = 0;
+    while i < (slash_vec.len() - 1) {
+        final_string = final_string +  &slash_vec[i].to_string() + &"\\".to_string();
+        i += 1;
+    }
+    return final_string;
+}
 
 fn check_files_extract_number_from_string(file_name: &str) -> i32{
     //create a regex instance that finds numbers
@@ -87,40 +168,6 @@ fn season_helper_create(number: i32) -> String{
     return "S".to_string();
 }
 
-pub fn iter_over_all_files(root_path: &str) -> bool{
-    let mut is_everything_correct: bool = true;
-    let mut is_there_a_folder = false;
-    let walker = WalkDir::new(root_path).into_iter();
-    if WalkDir::new(root_path).into_iter().count() > 1 {
-        is_there_a_folder = true;
-        for entry in walker.filter_entry(|e| !is_hidden(e)){
-            let current_entry = entry.unwrap();
-            
-            if current_entry.file_type().is_dir(){
-                println!("Entering Directory: {}", current_entry.file_name().to_str().unwrap());
-            }
-            else {
-                let current_series_name_and_season: Vec<&str>  = get_series_name_and_season(current_entry.path().to_str().unwrap(), current_entry.depth());
-                let current_file_name = current_entry.file_name().to_str().unwrap();
-                let current_episode_number = check_files_extract_number_from_string(current_file_name);
-                let current_season_number = extract_season_number(current_series_name_and_season[1]);
-                let current_file_extention = get_file_extention(current_file_name);
-                if !filter_extention(current_file_extention){
-                    if !is_file_name_valid(current_file_name, current_series_name_and_season[0], current_season_number, current_episode_number, current_file_extention){
-                        is_everything_correct = false;
-                        println!("{}", current_file_name);
-                    }
-                }
-            }
-        }
-    }
-    if !is_there_a_folder
-    {
-        println!("Folder is empty/non existent");
-    }
-    return is_everything_correct;
-}
-
 fn is_name_format_correct(file_name: &str, series_name: &str, season_number: i32, episode_number: i32, file_extention: &str, season_helper: String, episode_helper: String, subtitle_helper: &str) -> bool{
     //normal name with 00 example: "Fullmetal Alchemist Brotherhood - S01E01.mp4"
     if file_name == series_name.to_string() + &" - ".to_string() + &season_helper + &season_number.to_string() + &episode_helper + &episode_number.to_string() + subtitle_helper + &".".to_string() + file_extention{
@@ -150,6 +197,9 @@ fn is_file_name_valid(file_name: &str, series_name: &str, season_number: i32, ep
 
     return is_name_format_correct(file_name, series_name, season_number, episode_number, file_extention, season_helper, episode_helper, subtitle_helper);
 }
+
+
+
 
 #[cfg(test)]
 mod tests {
