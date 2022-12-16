@@ -44,15 +44,28 @@ pub fn iter_rename_files(folder_path: &str){
             let current_entry = entry.unwrap();
 
             if !current_entry.file_type().is_dir(){
-                let current_series_name_and_season: Vec<&str>  = get_series_name_and_season(current_entry.path().to_str().unwrap(), current_entry.depth());
-                let current_file_name = current_entry.file_name().to_str().unwrap();
+                let full_file_name = current_entry.path().to_str().unwrap();
+                let file_name = current_entry.file_name().to_str().unwrap();
+                let series_name_and_season: Vec<&str>  = get_series_name_and_season(current_entry.path().to_str().unwrap(), 3);
                 //rewrite extract number
-                let current_episode_number = check_files_extract_number_from_string(current_file_name);
-                let current_season_number = extract_season_number(current_series_name_and_season[1]);
-                let current_file_extention = get_file_extention(current_file_name);
+                let episode_number = check_files_extract_number_from_string(file_name);
+                let season_number = extract_season_number(series_name_and_season[1]);
+                let file_extention = get_file_extention(file_name);
+                let season_helper = season_helper_create(season_number);
+                let episode_helper = episode_helper_create(episode_number);
+                let subtitle_helper;
+                if file_extention == "ass" {
+                    subtitle_helper = ".eng";
+                }
+                else{
+                    subtitle_helper = "";
+                }
 
-                if !filter_extention(current_file_extention){
 
+                if !filter_extention(file_extention){
+                    if file_is_safe_to_change(current_entry.depth()){
+                        rename_file(full_file_name, file_name, series_name_and_season[0], season_helper, season_number, episode_helper, episode_number, subtitle_helper, file_extention)
+                    }
                 }
             }
         }
@@ -60,6 +73,14 @@ pub fn iter_rename_files(folder_path: &str){
     else{
         println!("Folder is empty/non existent");
     }
+}
+
+fn file_is_safe_to_change(file_depth: usize) -> bool{
+    if file_depth == 1{
+        return true;
+    }
+
+    return  false;
 }
 
 

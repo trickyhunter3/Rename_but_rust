@@ -41,7 +41,7 @@ impl eframe::App for MyApp {
             });
             if ui.button("Rename").clicked(){ 
                 //"G:\\AN\\Anime\\86 - Eighty Six\\Season 1\\86 - Eighty Six - S01E01.mkv"
-                //extract::Rename_file("G:\\AN\\Anime\\86 - Eighty Six\\Season 1\\86 - Eighty Six - S01E01.mkv");
+                extract::iter_rename_files(&self.user_path);
             }
             if ui.button("Check Files").clicked(){ 
                 extract::iter_over_all_files_check_files(&self.root_path_anime);
