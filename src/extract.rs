@@ -1,6 +1,8 @@
+use egui::Vec2;
 use walkdir::{DirEntry, WalkDir};
-use regex::Regex;
-use std::fs;
+use regex::{Regex, Match};
+use std::{fs, array};
+use array2d::{Array2D, Error};
 
 pub fn iter_over_all_files_check_files(root_path: &str) -> bool{
     let mut is_everything_correct: bool = true;
@@ -83,10 +85,18 @@ fn file_is_safe_to_change(file_depth: usize) -> bool{
     return  false;
 }
 
-fn extract_number_from_string_V1(file_name: &str, is_number_first: bool, is_number_second: bool, is_number_last: bool) -> i32{
+fn extract_number_from_string_v1(file_name: &str, is_number_first: bool, is_number_second: bool, is_number_last: bool) -> i32{
     let re = Regex::new(r"\d+").unwrap();
     //search with regex only numbers inside a &str
-    let mut numbers_in_array = re.find_iter(file_name).collect::<Vec<_>>();
+    let numbers_in_array = re.find_iter(file_name).collect::<Vec<_>>();
+
+    //if no numbers found
+    if numbers_in_array.len() == 0{
+        return -1;
+    }
+    else if numbers_in_array.len() == 1{//if there is only one number found
+        return numbers_in_array[0].as_str().parse().unwrap();
+    }
     //preset numbers
     if is_number_first{
         return numbers_in_array[0].as_str().parse().unwrap();
@@ -98,13 +108,31 @@ fn extract_number_from_string_V1(file_name: &str, is_number_first: bool, is_numb
         return numbers_in_array[numbers_in_array.len() - 1].as_str().parse().unwrap();
     }
 
+    //let normal_numbers_and_unbormal: Vec<Vec<i32> = find_normal_and_ubnormal_numbers(numbers_in_array);
+
     return 1;
 }
 
+fn find_normal_and_ubnormal_numbers(numbers_in_array: Vec<Match>) -> Vec<Vec<i32>>{
+    //use array_2d
+    let mut final_vec_vec: Vec<Vec<i32>> = vec![vec![0; numbers_in_array.len()]; numbers_in_array.len()];
+    let a: Vec2 = Vec2 { x: (), y: () }
+    //first vec is the "normal" numbers second is "ubnormal" numbers
+    for i in 0..numbers_in_array.len(){
+        match numbers_in_array[i].as_str().parse().unwrap() {
+            _ => final_vec_vec[0][0] = 1,
+        }
+    }
+
+    return [[0],[0]].to_vec();
+}
+
+
 fn rename_file(full_file_name: &str, file_name: &str, series_name: &str, season_helper: String, season_number: i32, episode_helper: String, episode_number: i32, subtitle_helper: &str, file_extention: &str){
     let file_path = get_file_path_no_name(full_file_name);
-    let mut final_name: String = file_path + &series_name.to_string() + &" - ".to_string() + &season_helper + &season_number.to_string() + &episode_helper + &episode_number.to_string() + subtitle_helper + &".".to_string() + file_extention;
-    println!("{} --> {}", file_name, final_name);
+    let final_name: String = file_path + &series_name.to_string() + &" - ".to_string() + &season_helper + &season_number.to_string() + &episode_helper + &episode_number.to_string() + subtitle_helper + &".".to_string() + file_extention;
+    let final_name_no_path: String = series_name.to_string() + &" - ".to_string() + &season_helper + &season_number.to_string() + &episode_helper + &episode_number.to_string() + subtitle_helper + &".".to_string() + file_extention;
+    println!("{} --> {}", file_name, final_name_no_path);
 }
 
 fn get_file_path_no_name(full_file_name: &str) -> String{
@@ -241,7 +269,7 @@ fn is_file_name_valid(file_name: &str, series_name: &str, season_number: i32, ep
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::extract::*;
     #[test]
     fn get_series_name_and_season_check(){
         let path = "C:\\Code\\hello\\86 - Eighty Six\\Season 1\\86 - Eighty Six - S01E02.txt";
@@ -281,3 +309,4 @@ mod tests {
         assert_eq!(get_file_extention(name2), "mkv");
     }
 }
+
