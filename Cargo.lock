@@ -124,12 +124,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "array2d"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79093d31d0a9c7832c71ad74dd945b7861f721e6f242aa67be253a5eecbac937"
-
-[[package]]
 name = "arrayref"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1344,7 +1338,6 @@ checksum = "456c603be3e8d448b072f410900c09faf164fbce2d480456f50eea6e25f9c848"
 name = "rename_but_rust"
 version = "0.1.0"
 dependencies = [
- "array2d",
  "eframe",
  "egui",
  "json",

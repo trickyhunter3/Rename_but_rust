@@ -1,3 +1,7 @@
+use egui::FontFamily::Proportional;
+use egui::FontId;
+use egui::TextStyle::*;
+
 use super::*;//extract library inside
 
 pub fn init_window(){
@@ -39,9 +43,21 @@ impl Default for MyApp {
 
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        
+        let mut style = (*ctx.style()).clone();
+
+        style.text_styles = [
+            (Heading, FontId::new(30.0, Proportional)),
+            (Name("Heading2".into()), FontId::new(25.0, Proportional)),
+            (Name("Context".into()), FontId::new(23.0, Proportional)),
+            (Body, FontId::new(18.0, Proportional)),
+            (Monospace, FontId::new(20.0, Proportional)),
+            (Button, FontId::new(35.0, Proportional)),
+            (Small, FontId::new(10.0, Proportional)),
+            ].into();
+
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("My egui Application");
+            ctx.set_style(style);
+            ui.heading("Renamer");
             ui.horizontal(|ui| {
                 let name_label = ui.label("Path: ");
                 ui.text_edit_singleline(&mut self.user_path)
@@ -56,8 +72,22 @@ impl eframe::App for MyApp {
             ui.add(egui::Checkbox::new(&mut self.is_number_second, "is number second?"));
             ui.add(egui::Checkbox::new(&mut self.is_number_last, "is number last?"));
             if ui.button("Check Files").clicked(){ 
-                extract::iter_over_all_files_check_files(&self.root_path_anime);
-                extract::iter_over_all_files_check_files(&self.root_path_anime_not);
+                let mut wrong_names:Vec<Vec<String>> = Vec::new();
+                let mut was_there_error = false;
+                println!("-----------------");
+                wrong_names.push(extract::iter_over_all_files_check_files(&self.root_path_anime));
+                wrong_names.push(extract::iter_over_all_files_check_files(&self.root_path_anime_not));
+                println!("-----------------");
+                println!("Errors:");
+                for i in wrong_names{
+                    for j in i{
+                        println!("{}", j);
+                        was_there_error = true;
+                    }
+                }
+                if !was_there_error{
+                    println!("everything is correct!");
+                }
             }
 
         });

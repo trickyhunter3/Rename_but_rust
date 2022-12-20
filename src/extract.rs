@@ -1,9 +1,9 @@
 use walkdir::{DirEntry, WalkDir};
-use regex::{Regex, Match};
-use std::{fs, array, collections::HashMap, hash::Hash, borrow::Borrow};
+use regex::Regex;
+use std::{collections::HashMap, fs};
 
-pub fn iter_over_all_files_check_files(root_path: &str) -> bool{
-    let mut is_everything_correct: bool = true;
+pub fn iter_over_all_files_check_files(root_path: &str) -> Vec<String>{
+    let mut wrong_names: Vec<String> = Vec::new();
     let mut is_there_a_folder = false;
     let walker = WalkDir::new(root_path).into_iter();
     if WalkDir::new(root_path).into_iter().count() > 1 {
@@ -22,8 +22,8 @@ pub fn iter_over_all_files_check_files(root_path: &str) -> bool{
                 let current_file_extention = get_file_extention(current_file_name);
                 if !filter_extention(current_file_extention){
                     if !is_file_name_valid(current_file_name, current_series_name_and_season[0], current_season_number, current_episode_number, current_file_extention){
-                        is_everything_correct = false;
-                        println!("{}", current_file_name);
+                        wrong_names.push(current_entry.path().to_string_lossy().to_string());
+                        println!("Wrong name: \"{}\"", current_entry.path().to_str().unwrap());
                     }
                 }
             }
@@ -33,7 +33,7 @@ pub fn iter_over_all_files_check_files(root_path: &str) -> bool{
     {
         println!("Folder is empty/non existent");
     }
-    return is_everything_correct;
+    return wrong_names;
 }
 
 pub fn iter_rename_files(folder_path: &str, is_number_first: bool, is_number_second: bool, is_number_last: bool){
@@ -169,6 +169,9 @@ fn rename_file(full_file_name: &str, file_name: &str, series_name: &str, season_
     let final_name: String = file_path + &series_name.to_string() + &" - ".to_string() + &season_helper + &season_number.to_string() + &episode_helper + &episode_number.to_string() + subtitle_helper + &".".to_string() + file_extention;
     let final_name_no_path: String = series_name.to_string() + &" - ".to_string() + &season_helper + &season_number.to_string() + &episode_helper + &episode_number.to_string() + subtitle_helper + &".".to_string() + file_extention;
     println!("\"{}\" -> \"{}\"", file_name, final_name_no_path);
+    if full_file_name != final_name{
+        fs::rename(full_file_name, final_name).unwrap();
+    }
 }
 
 fn get_file_path_no_name(full_file_name: &str) -> String{
@@ -176,7 +179,7 @@ fn get_file_path_no_name(full_file_name: &str) -> String{
     let slash_seperator = full_file_name.split('\\');
     let slash_vec: Vec<&str> = slash_seperator.collect();
 
-    for i in 0..slash_vec.len(){
+    for i in 0..(slash_vec.len() - 1){
         final_string = final_string +  &slash_vec[i].to_string() + &"\\".to_string();
     }
     return final_string;
@@ -304,6 +307,12 @@ fn is_file_name_valid(file_name: &str, series_name: &str, season_number: i32, ep
 #[cfg(test)]
 mod tests {
     use crate::extract::*;
+    #[test]
+    fn get_file_path_no_name_test(){
+        let path = "C:\\Code\\hello\\86 - Eighty Six\\Season 1\\86 - Eighty Six - S01E02.txt";
+        let path_no_name = get_file_path_no_name(path);
+        assert_eq!(path_no_name, "C:\\Code\\hello\\86 - Eighty Six\\Season 1\\");
+    }
     #[test]
     fn get_series_name_and_season_check(){
         let path = "C:\\Code\\hello\\86 - Eighty Six\\Season 1\\86 - Eighty Six - S01E02.txt";
