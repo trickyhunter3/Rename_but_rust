@@ -160,9 +160,6 @@ fn create_hashmap_from_names_in_folder(folder_path: &str) -> HashMap<String, i32
         }
     }
 
-    for (key,value) in &numbers_hashmap{
-        println!("key: {} , value: {}", key, value);
-    }
     return numbers_hashmap;
 }
 
@@ -179,10 +176,8 @@ fn get_file_path_no_name(full_file_name: &str) -> String{
     let slash_seperator = full_file_name.split('\\');
     let slash_vec: Vec<&str> = slash_seperator.collect();
 
-    let mut i = 0;
-    while i < (slash_vec.len() - 1) {
+    for i in 0..slash_vec.len(){
         final_string = final_string +  &slash_vec[i].to_string() + &"\\".to_string();
-        i += 1;
     }
     return final_string;
 }
