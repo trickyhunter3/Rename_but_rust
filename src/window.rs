@@ -48,8 +48,9 @@ impl eframe::App for MyApp {
                     .labelled_by(name_label.id);
             });
             if ui.button("Rename").clicked(){ 
-                //"G:\\AN\\Anime\\86 - Eighty Six\\Season 1\\86 - Eighty Six - S01E01.mkv"
-                extract::iter_rename_files(&self.user_path);
+                println!("-----------------");
+                extract::iter_rename_files(&self.user_path, self.is_number_first, self.is_number_second, self.is_number_last);
+                println!("-----------------");
             }
             ui.add(egui::Checkbox::new(&mut self.is_number_first, "is number first?"));
             ui.add(egui::Checkbox::new(&mut self.is_number_second, "is number second?"));

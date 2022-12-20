@@ -1,8 +1,6 @@
-use egui::Vec2;
 use walkdir::{DirEntry, WalkDir};
 use regex::{Regex, Match};
-use std::{fs, array};
-use array2d::{Array2D, Error};
+use std::{fs, array, collections::HashMap, hash::Hash, borrow::Borrow};
 
 pub fn iter_over_all_files_check_files(root_path: &str) -> bool{
     let mut is_everything_correct: bool = true;
@@ -37,11 +35,11 @@ pub fn iter_over_all_files_check_files(root_path: &str) -> bool{
     }
     return is_everything_correct;
 }
-//full_file_name: &str, series_name: &str, season_helper: String, season_number: i32, episode_helper: String, episode_number: i32
 
-pub fn iter_rename_files(folder_path: &str){
+pub fn iter_rename_files(folder_path: &str, is_number_first: bool, is_number_second: bool, is_number_last: bool){
     let walker = WalkDir::new(folder_path).into_iter();
     if WalkDir::new(folder_path).into_iter().count() > 1 {
+        let numbers_hashmap = create_hashmap_from_names_in_folder(folder_path);
         for entry in walker.filter_entry(|e| !is_hidden(e)){
             let current_entry = entry.unwrap();
 
@@ -50,7 +48,7 @@ pub fn iter_rename_files(folder_path: &str){
                 let file_name = current_entry.file_name().to_str().unwrap();
                 let series_name_and_season: Vec<&str>  = get_series_name_and_season(current_entry.path().to_str().unwrap(), 3);
                 //rewrite extract number
-                let episode_number = check_files_extract_number_from_string(file_name);
+                let episode_number = extract_number_from_string_v2(numbers_hashmap.clone(), file_name, is_number_first, is_number_second, is_number_last);
                 let season_number = extract_season_number(series_name_and_season[1]);
                 let file_extention = get_file_extention(file_name);
                 let season_helper = season_helper_create(season_number);
@@ -85,46 +83,87 @@ fn file_is_safe_to_change(file_depth: usize) -> bool{
     return  false;
 }
 
-fn extract_number_from_string_v1(file_name: &str, is_number_first: bool, is_number_second: bool, is_number_last: bool) -> i32{
+fn extract_number_from_string_v2(numbers_hashmap: HashMap<String, i32>, file_name: &str, is_number_first: bool, is_number_second: bool, is_number_last: bool) -> i32{
+    /*
+        how works:
+        takes all the files in the folder
+        gets all the numbers in the file names
+        gets all the numbers in the file names and count them
+        use the the most NOT used number
+        that probably the number i need
+    */
     let re = Regex::new(r"\d+").unwrap();
     //search with regex only numbers inside a &str
-    let numbers_in_array = re.find_iter(file_name).collect::<Vec<_>>();
-
+    let numbers_in_array_from_file = re.find_iter(file_name).collect::<Vec<_>>();
     //if no numbers found
-    if numbers_in_array.len() == 0{
+    if numbers_in_array_from_file.len() == 0{
         return -1;
     }
-    else if numbers_in_array.len() == 1{//if there is only one number found
-        return numbers_in_array[0].as_str().parse().unwrap();
+    else if numbers_in_array_from_file.len() == 1{//if there is only one number found
+        return numbers_in_array_from_file[0].as_str().parse().unwrap();
     }
-    //preset numbers
+    //choosen by user
     if is_number_first{
-        return numbers_in_array[0].as_str().parse().unwrap();
+        return numbers_in_array_from_file[0].as_str().parse().unwrap();
     }
     if is_number_second{
-        return numbers_in_array[1].as_str().parse().unwrap();
+        return numbers_in_array_from_file[1].as_str().parse().unwrap();
     }
     if is_number_last{
-        return numbers_in_array[numbers_in_array.len() - 1].as_str().parse().unwrap();
+        return numbers_in_array_from_file[numbers_in_array_from_file.len() - 1].as_str().parse().unwrap();
     }
+    //find in hash the number with lowest apearence
 
-    //let normal_numbers_and_unbormal: Vec<Vec<i32> = find_normal_and_ubnormal_numbers(numbers_in_array);
+    //for all the numbers in the file i will check how much it apeared
+    //and take the lowest number that apread
+    let mut min_num_str = numbers_in_array_from_file[0].as_str();
+    let mut min_num_apeared = numbers_hashmap.get(numbers_in_array_from_file[0].as_str()).unwrap();
 
-    return 1;
-}
+    for i in 1..numbers_in_array_from_file.len(){
+        let current_num_apeared = numbers_hashmap.get(numbers_in_array_from_file[i].as_str()).unwrap();
 
-fn find_normal_and_ubnormal_numbers(numbers_in_array: Vec<Match>) -> Vec<Vec<i32>>{
-    //use array_2d
-    let mut final_vec_vec: Vec<Vec<i32>> = vec![vec![0; numbers_in_array.len()]; numbers_in_array.len()];
-    let a: Vec2 = Vec2 { x: (), y: () }
-    //first vec is the "normal" numbers second is "ubnormal" numbers
-    for i in 0..numbers_in_array.len(){
-        match numbers_in_array[i].as_str().parse().unwrap() {
-            _ => final_vec_vec[0][0] = 1,
+        if current_num_apeared < min_num_apeared{
+            min_num_apeared = current_num_apeared;
+            min_num_str = numbers_in_array_from_file[i].as_str();
         }
     }
 
-    return [[0],[0]].to_vec();
+    return min_num_str.parse().unwrap();
+}
+
+fn create_hashmap_from_names_in_folder(folder_path: &str) -> HashMap<String, i32>{
+    let mut numbers_hashmap: HashMap<String, i32> = HashMap::new();
+    //regex to find numbers
+    let re = Regex::new(r"\d+").unwrap();
+    let walker = WalkDir::new(folder_path).into_iter();
+
+    //iter over the files inside the folder
+    for entry in walker.filter_entry(|e| !is_hidden(e)){
+        let current_entry = entry.unwrap();
+
+        //dont enter subfolders
+        if current_entry.depth() == 1{
+            let file_name = current_entry.file_name().to_string_lossy().to_string();
+            let numbers_in_array = re.find_iter(file_name.as_str()).collect::<Vec<_>>();
+
+            for j in 0..numbers_in_array.len(){
+                if !numbers_hashmap.contains_key(numbers_in_array[j].as_str()){
+                    numbers_hashmap.insert(numbers_in_array[j].as_str().to_string(), 1);
+                }
+                else {
+                    //found this number already so increase the times that i saw it
+                    let mut number_from_key_value = *(numbers_hashmap.get(numbers_in_array[j].as_str()).unwrap());
+                    number_from_key_value = number_from_key_value + 1;//still learning rust sorry
+                    numbers_hashmap.insert(numbers_in_array[j].as_str().to_string(), number_from_key_value);
+                }
+            }
+        }
+    }
+
+    for (key,value) in &numbers_hashmap{
+        println!("key: {} , value: {}", key, value);
+    }
+    return numbers_hashmap;
 }
 
 
@@ -132,7 +171,7 @@ fn rename_file(full_file_name: &str, file_name: &str, series_name: &str, season_
     let file_path = get_file_path_no_name(full_file_name);
     let final_name: String = file_path + &series_name.to_string() + &" - ".to_string() + &season_helper + &season_number.to_string() + &episode_helper + &episode_number.to_string() + subtitle_helper + &".".to_string() + file_extention;
     let final_name_no_path: String = series_name.to_string() + &" - ".to_string() + &season_helper + &season_number.to_string() + &episode_helper + &episode_number.to_string() + subtitle_helper + &".".to_string() + file_extention;
-    println!("{} --> {}", file_name, final_name_no_path);
+    println!("\"{}\" -> \"{}\"", file_name, final_name_no_path);
 }
 
 fn get_file_path_no_name(full_file_name: &str) -> String{
