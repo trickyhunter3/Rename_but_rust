@@ -47,12 +47,11 @@ pub fn iter_rename_files(folder_path: &str, is_number_first: bool, is_number_sec
                 let full_file_name = current_entry.path().to_str().unwrap();
                 let file_name = current_entry.file_name().to_str().unwrap();
                 let series_name_and_season: Vec<&str>  = get_series_name_and_season(current_entry.path().to_str().unwrap(), 3);
-                //rewrite extract number
                 let episode_number = extract_number_from_string_v2(numbers_hashmap.clone(), file_name, is_number_first, is_number_second, is_number_last);
                 let season_number = extract_season_number(series_name_and_season[1]);
                 let file_extention = get_file_extention(file_name);
-                let season_helper = season_helper_create(season_number);
-                let episode_helper = episode_helper_create(episode_number);
+                let season_helper = helper_create(season_number, "S".to_string());
+                let episode_helper = helper_create(episode_number, "E".to_string());
                 let subtitle_helper;
                 if file_extention == "ass" {
                     subtitle_helper = ".eng";
@@ -60,7 +59,6 @@ pub fn iter_rename_files(folder_path: &str, is_number_first: bool, is_number_sec
                 else{
                     subtitle_helper = "";
                 }
-
 
                 if !filter_extention(file_extention){
                     if file_is_safe_to_change(current_entry.depth()){
@@ -168,9 +166,12 @@ fn rename_file(full_file_name: &str, file_name: &str, series_name: &str, season_
     let file_path = get_file_path_no_name(full_file_name);
     let final_name: String = file_path + &series_name.to_string() + &" - ".to_string() + &season_helper + &season_number.to_string() + &episode_helper + &episode_number.to_string() + subtitle_helper + &".".to_string() + file_extention;
     let final_name_no_path: String = series_name.to_string() + &" - ".to_string() + &season_helper + &season_number.to_string() + &episode_helper + &episode_number.to_string() + subtitle_helper + &".".to_string() + file_extention;
-    println!("\"{}\" -> \"{}\"", file_name, final_name_no_path);
     if full_file_name != final_name{
+        println!("\"{}\" -> \"{}\"", file_name, final_name_no_path);
         fs::rename(full_file_name, final_name).unwrap();
+    }
+    else{
+        println!("\"{}\" is already a correct name", file_name);
     }
 }
 
@@ -255,20 +256,12 @@ fn is_hidden(entry: &DirEntry) -> bool {
          .unwrap_or(false)
 }
 
-fn episode_helper_create(number: i32) -> String{
+fn helper_create(number: i32, e_or_s: String) -> String{
     if number / 10 == 0{
-        return "E0".to_string();
+        return e_or_s + &"0".to_string();
     }
 
-    return "E".to_string();
-}
-
-fn season_helper_create(number: i32) -> String{
-    if number / 10 == 0{
-        return "S0".to_string();
-    }
-
-    return "S".to_string();
+    return e_or_s.to_string();
 }
 
 fn is_name_format_correct(file_name: &str, series_name: &str, season_number: i32, episode_number: i32, file_extention: &str, season_helper: String, episode_helper: String, subtitle_helper: &str) -> bool{
@@ -295,8 +288,8 @@ fn is_file_name_valid(file_name: &str, series_name: &str, season_number: i32, ep
         subtitle_helper = "";
     }
 
-    let episode_helper = episode_helper_create(episode_number);//E or E0
-    let season_helper = season_helper_create(season_number);//S or S0
+    let episode_helper = helper_create(episode_number, "E".to_string());//E or E0
+    let season_helper = helper_create(season_number, "S".to_string());//S or S0
 
     return is_name_format_correct(file_name, series_name, season_number, episode_number, file_extention, season_helper, episode_helper, subtitle_helper);
 }

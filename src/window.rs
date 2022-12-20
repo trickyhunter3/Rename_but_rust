@@ -1,6 +1,8 @@
 use egui::FontFamily::Proportional;
 use egui::FontId;
 use egui::TextStyle::*;
+use std::fs;//read json
+use serde_json::Value;
 
 use super::*;//extract library inside
 
@@ -18,10 +20,9 @@ pub fn init_window(){
 
 
 struct MyApp {
-    root_path_anime: String,
-    root_path_anime_not: String,
+    json_path_anime: String,
+    json_path_anime_not: String,
     user_path: String,
-    json_path: String,
     is_number_first: bool,
     is_number_second: bool,
     is_number_last: bool,
@@ -30,16 +31,22 @@ struct MyApp {
 impl Default for MyApp {
     fn default() -> Self {
         Self {
-            root_path_anime: "G:\\AN\\Anime".to_owned(),
-            root_path_anime_not: "G:\\AN\\Anime not".to_owned(),
+            json_path_anime: get_json("Anime".to_string()).to_owned(),
+            json_path_anime_not: get_json("Anime not".to_string()).to_owned(),
             user_path: "".to_owned(),
-            json_path: "".to_owned(),
             is_number_first: false,
             is_number_second: false,
             is_number_last: false,
         }
     }
 }
+
+fn get_json(folder: String) -> String{
+    let contents = fs::read_to_string("paths.json").unwrap();
+    let value: Value = serde_json::from_str(&contents).unwrap();
+    return value[folder].as_str().unwrap().to_string();//to remove ""
+}
+
 
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
@@ -75,8 +82,10 @@ impl eframe::App for MyApp {
                 let mut wrong_names:Vec<Vec<String>> = Vec::new();
                 let mut was_there_error = false;
                 println!("-----------------");
-                wrong_names.push(extract::iter_over_all_files_check_files(&self.root_path_anime));
-                wrong_names.push(extract::iter_over_all_files_check_files(&self.root_path_anime_not));
+                println!("Anime: {}", &self.json_path_anime);
+                println!("Anime not : {}", &self.json_path_anime_not);
+                wrong_names.push(extract::iter_over_all_files_check_files(&self.json_path_anime));
+                wrong_names.push(extract::iter_over_all_files_check_files(&self.json_path_anime_not));
                 println!("-----------------");
                 println!("Errors:");
                 for i in wrong_names{
