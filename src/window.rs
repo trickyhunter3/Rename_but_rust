@@ -45,21 +45,19 @@ impl Default for MyApp {
 fn get_json(folder: String) -> String{
     let contents = match fs::read_to_string("paths.json"){
         Ok(_string) => _string,
-        Err(_err) => "Err".to_string(),
+        Err(_err) => {
+            println!("File \"paths.json\" doesnt exist/locked");
+            return "Json Read Error".to_string();
+        },
     };
-    if contents == "Err"{
-        println!("File paths.json doesnt exist/locked");
-        return "".to_string();
-    }
     let value: Value = serde_json::from_str(&contents).unwrap();
     let value_inside_json = match value[&folder].as_str(){
         Some(_str) => _str,
-        None => "Err",
+        None => {
+            println!("value \"{}\" was not found inside paths.json", &folder);
+            return "Json Value Error".to_string();
+        },
     };
-    if value_inside_json == "Err"{
-        println!("value \"{}\" was not found inside paths.json", &folder);
-        return "".to_string();
-    }
     return value_inside_json.to_string();//to remove ""
 }
 
