@@ -50,7 +50,13 @@ fn get_json(folder: String) -> String{
             return "Json Read Error".to_string();
         },
     };
-    let value: Value = serde_json::from_str(&contents).unwrap();
+    let value: Value = match serde_json::from_str(&contents) {
+        Ok(_str) => _str,
+        Err(_err) => {
+            println!("Incorrect Json Format inside paths json");
+            return "Incorrect Json Format".to_string();
+        },
+    };
     let value_inside_json = match value[&folder].as_str(){
         Some(_str) => _str,
         None => {
