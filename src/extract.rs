@@ -31,7 +31,7 @@ pub fn iter_over_all_files_check_files(root_path: &str) -> Vec<String>{
     }
     if !is_there_a_folder
     {
-        println!("Folder is empty/non existent");
+        println!("Folder \"{}\" is empty/non existent", root_path);
     }
     return wrong_names;
 }
