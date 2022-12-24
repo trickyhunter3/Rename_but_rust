@@ -2,6 +2,7 @@ use egui::FontFamily::Proportional;
 use egui::FontId;
 use egui::TextStyle::*;
 use std::collections::HashMap;
+use std::fmt::Error;
 use std::fs;//read json
 use serde_json::Value;
 
@@ -21,8 +22,8 @@ pub fn init_window(){
 
 
 struct MyApp {
-    json_path_anime: String,
-    json_path_anime_not: String,
+    json_path_anime: Result<String, Error>,
+    json_path_anime_not: Result<String, Error>,
     user_path: String,
     is_number_first: bool,
     is_number_second: bool,
@@ -42,29 +43,15 @@ impl Default for MyApp {
     }
 }
 
-fn get_json(folder: String) -> String{
+fn get_json(folder: String) -> Result<String, Error>{
     let contents = match fs::read_to_string("paths.json"){
-        Ok(_string) => _string,
-        Err(_err) => {
+        Ok(string) => string,
+        Err(err) => {
             println!("File \"paths.json\" doesnt exist/locked");
-            return "Json Read Error".to_string();
+            return Err("invalid version");
         },
     };
-    let value: Value = match serde_json::from_str(&contents) {
-        Ok(_str) => _str,
-        Err(_err) => {
-            println!("Incorrect Json Format inside paths json");
-            return "Incorrect Json Format".to_string();
-        },
-    };
-    let value_inside_json = match value[&folder].as_str(){
-        Some(_str) => _str,
-        None => {
-            println!("value \"{}\" was not found inside paths.json", &folder);
-            return "Json Value Error".to_string();
-        },
-    };
-    return value_inside_json.to_string();//to remove ""
+    return serde_json::from_str(&contents);
 }
 
 fn get_file_path_no_name(full_name: String) -> String{
