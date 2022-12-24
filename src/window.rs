@@ -2,7 +2,6 @@ use egui::FontFamily::Proportional;
 use egui::FontId;
 use egui::TextStyle::*;
 use std::collections::HashMap;
-use std::fmt::Error;
 use std::fs;//read json
 use serde_json::Value;
 
@@ -22,8 +21,7 @@ pub fn init_window(){
 
 
 struct MyApp {
-    json_path_anime: Result<String, Error>,
-    json_path_anime_not: Result<String, Error>,
+    json_paths: Vec<Result<String, String>>,
     user_path: String,
     is_number_first: bool,
     is_number_second: bool,
@@ -33,8 +31,7 @@ struct MyApp {
 impl Default for MyApp {
     fn default() -> Self {
         Self {
-            json_path_anime: get_json("Anime".to_string()).to_owned(),
-            json_path_anime_not: get_json("Anime not".to_string()).to_owned(),
+            json_paths: get_json(),
             user_path: "".to_owned(),
             is_number_first: false,
             is_number_second: false,
@@ -43,24 +40,51 @@ impl Default for MyApp {
     }
 }
 
-fn get_json(folder: String) -> Result<String, Error>{
-    let contents = match fs::read_to_string("paths.json"){
+fn get_json() -> Vec<Result<String, String>>{
+    let mut final_vec: Vec<Result<String, String>> = Vec::new();
+    let json_file_string = match fs::read_to_string("paths.json"){
         Ok(string) => string,
-        Err(err) => {
-            println!("File \"paths.json\" doesnt exist/locked");
-            return Err("invalid version");
+        Err(_err) => {
+            println!("Cannot Open json file \"paths.json\"");
+            final_vec.push(Err("Cannot Open json file \"paths.json\"".to_string()));
+            return final_vec;
         },
     };
-    return serde_json::from_str(&contents);
+    let json_values: Value = match serde_json::from_str(&json_file_string){
+        Ok(value) => value,
+        Err(_err) => {
+            println!("\"paths.json\" fromatted incorectly");
+            final_vec.push(Err("\"paths.json\" fromatted incorectly".to_string()));
+            return final_vec;
+        }
+    };
+    let json_names_value = match json_values["Value_Names"].as_str(){
+        Some(str) => str,
+        None => {
+            println!("\"Value_Names\" was not found inside \"paths.json\"");
+            final_vec.push(Err("\"Value_Names\" was not found inside \"paths.json\"".to_string()));
+            return final_vec;
+        }
+    };
+    let comma_seperator: Vec<&str> = json_names_value.split(',').collect();
+    for i in comma_seperator{
+        let current_value = json_values[i].as_str();
+        if current_value.is_some(){
+            final_vec.push(Ok(current_value.unwrap().to_string()));
+        }
+        else{
+            println!("\"{}\" was not found inside \"paths.json\"", i);
+        }
+    }
+    return final_vec;
 }
 
 fn get_file_path_no_name(full_name: String) -> String{
     let mut final_string: String = "".to_string();
-    let slash_seperator = full_name.split('\\');
-    let slash_vec: Vec<&str> = slash_seperator.collect();
+    let slash_seperator: Vec<&str> = full_name.split('\\').collect();
 
-    for i in 0..(slash_vec.len() - 1){
-        final_string = final_string +  &slash_vec[i].to_string() + &"\\".to_string();
+    for i in 0..(slash_seperator.len() - 1){
+        final_string = final_string +  &slash_seperator[i].to_string() + &"\\".to_string();
     }
     return final_string;
 }
@@ -115,11 +139,18 @@ impl eframe::App for MyApp {
             if ui.button("Check Files").clicked(){ 
                 let mut wrong_names:Vec<Vec<String>> = Vec::new();
                 let mut was_there_error = false;
-                println!("---------------------------------------------------");
-                println!("Anime: {}", &self.json_path_anime);
-                println!("Anime not : {}", &self.json_path_anime_not);
-                wrong_names.push(extract::iter_over_all_files_check_files(&self.json_path_anime));
-                wrong_names.push(extract::iter_over_all_files_check_files(&self.json_path_anime_not));
+                for i in &self.json_paths{
+                    println!("---------------------------------------------------");
+                    match i{
+                        Ok(str) => {
+                            println!("{}", str);
+                            wrong_names.push(extract::iter_over_all_files_check_files(str));
+                        },
+                        Err(str) => {
+                            println!("{}", str);
+                        },
+                    };
+                }
                 println!("---------------------------------------------------");
                 println!("Errors:");
                 for i in &wrong_names{
@@ -134,11 +165,9 @@ impl eframe::App for MyApp {
                 else{
                     println!("---------------------------------------------------");
                     println!("Directories:");
-                    extract_the_directories(wrong_names);
+                    extract_the_directories(wrong_names.clone());
                 }
             }
-
         });
-
     }
 }
