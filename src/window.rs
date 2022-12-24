@@ -21,7 +21,7 @@ pub fn init_window(){
 
 
 struct MyApp {
-    json_paths: Vec<Result<String, String>>,
+    json_paths: Vec<String>,
     user_path: String,
     is_number_first: bool,
     is_number_second: bool,
@@ -40,13 +40,12 @@ impl Default for MyApp {
     }
 }
 
-fn get_json() -> Vec<Result<String, String>>{
-    let mut final_vec: Vec<Result<String, String>> = Vec::new();
+fn get_json() -> Vec<String>{
+    let mut final_vec: Vec<String> = Vec::new();
     let json_file_string = match fs::read_to_string("paths.json"){
         Ok(string) => string,
         Err(_err) => {
             println!("Cannot Open json file \"paths.json\"");
-            final_vec.push(Err("Cannot Open json file \"paths.json\"".to_string()));
             return final_vec;
         },
     };
@@ -54,7 +53,6 @@ fn get_json() -> Vec<Result<String, String>>{
         Ok(value) => value,
         Err(_err) => {
             println!("\"paths.json\" fromatted incorectly");
-            final_vec.push(Err("\"paths.json\" fromatted incorectly".to_string()));
             return final_vec;
         }
     };
@@ -62,7 +60,6 @@ fn get_json() -> Vec<Result<String, String>>{
         Some(str) => str,
         None => {
             println!("\"Value_Names\" was not found inside \"paths.json\"");
-            final_vec.push(Err("\"Value_Names\" was not found inside \"paths.json\"".to_string()));
             return final_vec;
         }
     };
@@ -70,7 +67,7 @@ fn get_json() -> Vec<Result<String, String>>{
     for i in comma_seperator{
         let current_value = json_values[i].as_str();
         if current_value.is_some(){
-            final_vec.push(Ok(current_value.unwrap().to_string()));
+            final_vec.push(current_value.unwrap().to_string());
         }
         else{
             println!("\"{}\" was not found inside \"paths.json\"", i);
@@ -137,37 +134,39 @@ impl eframe::App for MyApp {
             ui.add(egui::Checkbox::new(&mut self.is_number_second, "is number second?"));
             ui.add(egui::Checkbox::new(&mut self.is_number_last, "is number last?"));
             if ui.button("Check Files").clicked(){ 
-                let mut wrong_names:Vec<Vec<String>> = Vec::new();
-                let mut was_there_error = false;
-                for i in &self.json_paths{
-                    println!("---------------------------------------------------");
-                    match i{
-                        Ok(str) => {
-                            println!("{}", str);
-                            wrong_names.push(extract::iter_over_all_files_check_files(str));
-                        },
-                        Err(str) => {
-                            println!("{}", str);
-                        },
-                    };
-                }
-                println!("---------------------------------------------------");
-                println!("Errors:");
-                for i in &wrong_names{
-                    for j in i{
-                        println!("{}", j);
-                        was_there_error = true;
-                    }
-                }
-                if !was_there_error{
-                    println!("everything is correct!");
-                }
-                else{
-                    println!("---------------------------------------------------");
-                    println!("Directories:");
-                    extract_the_directories(wrong_names.clone());
-                }
+                btn_check_files(&self.json_paths)
             }
         });
+    }
+}
+
+
+fn btn_check_files(json_paths: &Vec<String>){
+    if json_paths.len() == 0{
+        println!("There are no folders to check\ncheck if the json file formated correctly");
+        return;
+    }
+    let mut wrong_names:Vec<Vec<String>> = Vec::new();
+    let mut was_there_error = false;
+    for i in json_paths{
+        println!("---------------------------------------------------");
+        println!("{}", i);
+        wrong_names.push(extract::iter_over_all_files_check_files(i));
+    }
+    println!("---------------------------------------------------");
+    println!("Errors:");
+    for i in &wrong_names{
+        for j in i{
+            println!("{}", j);
+            was_there_error = true;
+        }
+    }
+    if !was_there_error{
+        println!("everything is correct!");
+    }
+    else{
+        println!("---------------------------------------------------");
+        println!("Directories:");
+        extract_the_directories(wrong_names.clone());
     }
 }
