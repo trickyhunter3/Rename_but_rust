@@ -109,7 +109,7 @@ impl eframe::App for MyApp {
             (Name("Context".into()), FontId::new(23.0, Proportional)),
             (Body, FontId::new(18.0, Proportional)),
             (Monospace, FontId::new(20.0, Proportional)),
-            (Button, FontId::new(35.0, Proportional)),
+            (Button, FontId::new(20.0, Proportional)),
             (Small, FontId::new(10.0, Proportional)),
             ].into();
 
