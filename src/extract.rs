@@ -301,6 +301,32 @@ fn is_file_name_valid(file_name: &str, series_name: &str, season_number: i32, ep
 mod tests {
     use crate::extract::*;
     #[test]
+    fn helper_create_test(){
+        let season_number_1 = 1;
+        let season_number_2 = 13;
+        let season_number_3 = 108;
+
+        let episode_number_1 = 1;
+        let episode_number_2 = 15;
+        let episode_number_3 = 105;
+
+        let episode_helper_1 = helper_create(episode_number_1, "E".to_string());
+        let episode_helper_2 = helper_create(episode_number_2, "E".to_string());
+        let episode_helper_3 = helper_create(episode_number_3, "E".to_string());
+
+        assert_eq!(episode_helper_1, "E0");
+        assert_eq!(episode_helper_2, "E");
+        assert_eq!(episode_helper_3, "E");
+
+        let season_helper_1 = helper_create(season_number_1, "S".to_string());
+        let season_helper_2 = helper_create(season_number_2, "S".to_string());
+        let season_helper_3 = helper_create(season_number_3, "S".to_string());
+
+        assert_eq!(season_helper_1, "S0");
+        assert_eq!(season_helper_2, "S");
+        assert_eq!(season_helper_3, "S");
+    }
+    #[test]
     fn get_file_path_no_name_test(){
         let path = "C:\\Code\\hello\\86 - Eighty Six\\Season 1\\86 - Eighty Six - S01E02.txt";
         let path_no_name = get_file_path_no_name(path);
