@@ -138,6 +138,9 @@ impl eframe::App for MyApp {
             if ui.button("Check Files").clicked() {
                 btn_check_files(&self.json_paths)
             }
+            if ui.button("Show Folder Files").clicked() {
+                btn_show_folder_files(&self.user_path);
+            }
         });
     }
 }
@@ -170,3 +173,8 @@ fn btn_check_files(json_paths: &Vec<String>) {
         extract_the_directories(wrong_names.clone());
     }
 }
+
+fn btn_show_folder_files(folder_path: &str){
+    extract::iter_print_all_files(folder_path);
+}
+

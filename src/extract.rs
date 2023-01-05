@@ -4,72 +4,88 @@ use std::{collections::HashMap, fs};
 
 pub fn iter_over_all_files_check_files(root_path: &str) -> Vec<String>{
     let mut wrong_names: Vec<String> = Vec::new();
-    let mut is_there_a_folder = false;
+    if WalkDir::new(root_path).into_iter().count() <= 1 {
+        println!("Folder is empty/non existent");
+        return wrong_names;
+    }
+
     let walker = WalkDir::new(root_path).into_iter();
-    if WalkDir::new(root_path).into_iter().count() > 1 {
-        is_there_a_folder = true;
-        for entry in walker.filter_entry(|e| !is_hidden(e)){
-            let current_entry = entry.unwrap();
-            
-            if current_entry.file_type().is_dir(){
-                println!("Entering Directory: {}", current_entry.file_name().to_str().unwrap());
-            }
-            else {
-                let current_series_name_and_season: Vec<&str>  = get_series_name_and_season(current_entry.path().to_str().unwrap(), current_entry.depth());
-                let current_file_name = current_entry.file_name().to_str().unwrap();
-                let current_episode_number = check_files_extract_number_from_string(current_file_name);
-                let current_season_number = extract_season_number(current_series_name_and_season[1]);
-                let current_file_extention = get_file_extention(current_file_name);
-                if !filter_extention(current_file_extention){
-                    if !is_file_name_valid(current_file_name, current_series_name_and_season[0], current_season_number, current_episode_number, current_file_extention){
-                        wrong_names.push(current_entry.path().to_string_lossy().to_string());
-                        println!("Wrong name: \"{}\"", current_entry.path().to_str().unwrap());
-                    }
+    for entry in walker.filter_entry(|e| !is_hidden(e)){
+        let current_entry = entry.unwrap();
+        
+        if current_entry.file_type().is_dir(){
+            println!("Entering Directory: {}", current_entry.file_name().to_str().unwrap());
+        }
+        else {
+            let current_series_name_and_season: Vec<&str>  = get_series_name_and_season(current_entry.path().to_str().unwrap(), current_entry.depth());
+            let current_file_name = current_entry.file_name().to_str().unwrap();
+            let current_episode_number = check_files_extract_number_from_string(current_file_name);
+            let current_season_number = extract_season_number(current_series_name_and_season[1]);
+            let current_file_extention = get_file_extention(current_file_name);
+            if !filter_extention(current_file_extention){
+                if !is_file_name_valid(current_file_name, current_series_name_and_season[0], current_season_number, current_episode_number, current_file_extention){
+                    wrong_names.push(current_entry.path().to_string_lossy().to_string());
+                    println!("Wrong name: \"{}\"", current_entry.path().to_str().unwrap());
                 }
             }
         }
     }
-    if !is_there_a_folder
-    {
-        println!("Folder \"{}\" is empty/non existent", root_path);
-    }
+
     return wrong_names;
 }
 
 pub fn iter_rename_files(folder_path: &str, is_number_first: bool, is_number_second: bool, is_number_last: bool){
+    if WalkDir::new(folder_path).into_iter().count() <= 1 {
+        println!("Folder is empty/non existent");
+        return;
+    }
+
     let walker = WalkDir::new(folder_path).into_iter();
-    if WalkDir::new(folder_path).into_iter().count() > 1 {
-        let numbers_hashmap = create_hashmap_from_names_in_folder(folder_path);
-        for entry in walker.filter_entry(|e| !is_hidden(e)){
-            let current_entry = entry.unwrap();
+    let numbers_hashmap = create_hashmap_from_names_in_folder(folder_path);
+    for entry in walker.filter_entry(|e| !is_hidden(e)){
+        let current_entry = entry.unwrap();
 
-            if !current_entry.file_type().is_dir(){
-                let full_file_name = current_entry.path().to_str().unwrap();
-                let file_name = current_entry.file_name().to_str().unwrap();
-                let series_name_and_season: Vec<&str>  = get_series_name_and_season(current_entry.path().to_str().unwrap(), 3);
-                let episode_number = extract_number_from_string_v2(numbers_hashmap.clone(), file_name, is_number_first, is_number_second, is_number_last);
-                let season_number = extract_season_number(series_name_and_season[1]);
-                let file_extention = get_file_extention(file_name);
-                let season_helper = helper_create(season_number, "S".to_string());
-                let episode_helper = helper_create(episode_number, "E".to_string());
-                let subtitle_helper;
-                if file_extention == "ass" {
-                    subtitle_helper = ".eng";
-                }
-                else{
-                    subtitle_helper = "";
-                }
+        if !current_entry.file_type().is_dir(){
+            let full_file_name = current_entry.path().to_str().unwrap();
+            let file_name = current_entry.file_name().to_str().unwrap();
+            let series_name_and_season: Vec<&str>  = get_series_name_and_season(current_entry.path().to_str().unwrap(), 3);
+            let episode_number = extract_number_from_string_v2(numbers_hashmap.clone(), file_name, is_number_first, is_number_second, is_number_last);
+            let season_number = extract_season_number(series_name_and_season[1]);
+            let file_extention = get_file_extention(file_name);
+            let season_helper = helper_create(season_number, "S".to_string());
+            let episode_helper = helper_create(episode_number, "E".to_string());
+            let subtitle_helper;
+            if file_extention == "ass" {
+                subtitle_helper = ".eng";
+            }
+            else{
+                subtitle_helper = "";
+            }
 
-                if !filter_extention(file_extention){
-                    if file_is_safe_to_change(current_entry.depth()){
-                        rename_file(full_file_name, file_name, series_name_and_season[0], season_helper, season_number, episode_helper, episode_number, subtitle_helper, file_extention)
-                    }
+            if !filter_extention(file_extention){
+                if file_is_safe_to_change(current_entry.depth()){
+                    rename_file(full_file_name, file_name, series_name_and_season[0], season_helper, season_number, episode_helper, episode_number, subtitle_helper, file_extention)
                 }
             }
         }
     }
-    else{
+}
+
+pub fn iter_print_all_files(folder_path: &str){
+    if WalkDir::new(folder_path).into_iter().count() <= 1 {
         println!("Folder is empty/non existent");
+        return;
+    }
+    
+    let walker = WalkDir::new(folder_path).into_iter();
+    for entry in walker.filter_entry(|e| !is_hidden(e)){
+        let current_entry = entry.unwrap();
+
+        let file_name = current_entry.file_name().to_str().unwrap();
+        let file_extention = get_file_extention(file_name);
+        if !filter_extention(file_extention){
+            println!("{}", file_name);
+        }
     }
 }
 
@@ -242,11 +258,12 @@ fn get_series_name_and_season(file_path: &str, file_depth: usize) -> Vec<&str>{
 }
 
 fn filter_extention(file_extention: &str) -> bool{
-    if file_extention == "ini" || file_extention == "nfo" || file_extention == "ico"{
-        return true;
+    match file_extention{
+        "ini" => return true,
+        "nfo" => return true,
+        "ico" => return true,
+        _ => return false
     }
-
-    return false;
 }
 
 fn is_hidden(entry: &DirEntry) -> bool {
