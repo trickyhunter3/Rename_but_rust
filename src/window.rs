@@ -22,6 +22,7 @@ pub fn init_window() {
 struct MyApp {
     json_paths: Vec<String>,
     user_path: String,
+    name_enc: String,
     is_number_first: bool,
     is_number_second: bool,
     is_number_last: bool,
@@ -32,6 +33,7 @@ impl Default for MyApp {
         Self {
             json_paths: get_json(),
             user_path: "".to_owned(),
+            name_enc: "".to_owned(),
             is_number_first: false,
             is_number_second: false,
             is_number_last: false,
@@ -118,6 +120,7 @@ impl eframe::App for MyApp {
                 let name_label = ui.label("Path: ");
                 ui.text_edit_multiline(&mut self.user_path).labelled_by(name_label.id);
             });
+
             if ui.button("Rename").clicked() {
                 println!("---------------------------------------------------");
                 let slash_seperator = self.user_path.split('\n');
@@ -132,15 +135,24 @@ impl eframe::App for MyApp {
                     println!("---------------------------------------------------");
                 }
             }
+
             ui.add(egui::Checkbox::new(&mut self.is_number_first, "is number first?"));
             ui.add(egui::Checkbox::new(&mut self.is_number_second, "is number second?"));
             ui.add(egui::Checkbox::new(&mut self.is_number_last, "is number last?"));
+
             if ui.button("Check Files").clicked() {
                 btn_check_files(&self.json_paths)
             }
             if ui.button("Show Folder Files").clicked() {
                 btn_show_folder_files(&self.user_path);
             }
+            if ui.button("Rename Encodes").clicked() {
+                btn_rename_encoding(&self.user_path, &self.name_enc, self.is_number_first, self.is_number_second, self.is_number_last);
+            }
+            ui.vertical(|ui| {
+                let name_label = ui.label("Encoder_name, Series_name");
+                ui.text_edit_multiline(&mut self.name_enc).labelled_by(name_label.id);
+            });
         });
     }
 }
@@ -178,3 +190,6 @@ fn btn_show_folder_files(folder_path: &str){
     extract::iter_print_all_files(folder_path);
 }
 
+fn btn_rename_encoding(folder_path: &str, name_enc: &str, is_number_first: bool, is_number_second: bool, is_number_last: bool){
+    extract::iter_rename_encodes(folder_path, name_enc, is_number_first, is_number_second, is_number_last);
+}
