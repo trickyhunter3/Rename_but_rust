@@ -33,7 +33,7 @@ impl Default for MyApp {
         Self {
             json_paths: get_json(),
             user_path: "".to_owned(),
-            name_enc: "".to_owned(),
+            name_enc: "[denisplay] , (1080p) [AV1]".to_owned(),
             is_number_first: false,
             is_number_second: false,
             is_number_last: false,
@@ -150,7 +150,7 @@ impl eframe::App for MyApp {
                 btn_rename_encoding(&self.user_path, &self.name_enc, self.is_number_first, self.is_number_second, self.is_number_last);
             }
             ui.vertical(|ui| {
-                let name_label = ui.label("Encoder_name, Series_name");
+                let name_label = ui.label("Encoder_name, Res");
                 ui.text_edit_multiline(&mut self.name_enc).labelled_by(name_label.id);
             });
         });
@@ -191,5 +191,6 @@ fn btn_show_folder_files(folder_path: &str){
 }
 
 fn btn_rename_encoding(folder_path: &str, name_enc: &str, is_number_first: bool, is_number_second: bool, is_number_last: bool){
-    extract::iter_rename_encodes(folder_path, name_enc, is_number_first, is_number_second, is_number_last);
+    let name_enc_vec: Vec<&str> = name_enc.split(",").collect();
+    extract::iter_rename_encodes(folder_path, &name_enc_vec, is_number_first, is_number_second, is_number_last);
 }

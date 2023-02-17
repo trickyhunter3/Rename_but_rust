@@ -89,7 +89,7 @@ pub fn iter_print_all_files(folder_path: &str){
     }
 }
 
-pub fn iter_rename_encodes(folder_path: &str, name_enc: &str, is_number_first: bool, is_number_second: bool, is_number_last: bool){
+pub fn iter_rename_encodes(folder_path: &str, name_enc: &Vec<&str>, is_number_first: bool, is_number_second: bool, is_number_last: bool){
     if WalkDir::new(folder_path).into_iter().count() <= 1 {
         println!("Folder is empty/non existent");
         return;
@@ -119,7 +119,7 @@ pub fn iter_rename_encodes(folder_path: &str, name_enc: &str, is_number_first: b
 
             if !filter_extention(file_extention){
                 if file_is_safe_to_change(current_entry.depth()){
-                    rename_file_encoded(full_file_name, file_name, series_name_and_season[0], season_helper, season_number, episode_helper, episode_number, subtitle_helper, file_extention);
+                    rename_file_encoded(full_file_name, file_name, series_name_and_season[0], season_helper, season_number, episode_helper, episode_number, subtitle_helper, file_extention, name_enc);
                 }
             }
         }
@@ -228,10 +228,10 @@ fn rename_file(full_file_name: &str, file_name: &str, series_name: &str, season_
     }
 }
 
-fn rename_file_encoded(full_file_name: &str, file_name: &str, series_name: &str, season_helper: String, season_number: i32, episode_helper: String, episode_number: i32, subtitle_helper: &str, file_extention: &str){
+fn rename_file_encoded(full_file_name: &str, file_name: &str, series_name: &str, season_helper: String, season_number: i32, episode_helper: String, episode_number: i32, subtitle_helper: &str, file_extention: &str, name_enc: &Vec<&str>){
     let file_path = get_file_path_no_name(full_file_name);
-    let final_name: String = file_path + &"[denisplay] " + &series_name.to_string() + &" - ".to_string() + &season_helper + &season_number.to_string() + &episode_helper + &episode_number.to_string() + subtitle_helper + &" (1080p) [AV1]" + &".".to_string() + file_extention;
-    let final_name_no_path: String = "[denisplay] ".to_string() + &series_name.to_string() + &" - ".to_string() + &season_helper + &season_number.to_string() + &episode_helper + &episode_number.to_string() + subtitle_helper + &" (1080p) [AV1]" + &".".to_string() + file_extention;
+    let final_name: String = file_path + name_enc[0] + &series_name.to_string() + &" - ".to_string() + &season_helper + &season_number.to_string() + &episode_helper + &episode_number.to_string() + subtitle_helper + name_enc[1] + &".".to_string() + file_extention;
+    let final_name_no_path: String = name_enc[0].to_string() + &series_name.to_string() + &" - ".to_string() + &season_helper + &season_number.to_string() + &episode_helper + &episode_number.to_string() + subtitle_helper + name_enc[1] + &".".to_string() + file_extention;
     if full_file_name != final_name{
         println!("\"{}\" -> \"{}\"", file_name, final_name_no_path);
         fs::rename(full_file_name, final_name).unwrap();
