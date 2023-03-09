@@ -140,18 +140,25 @@ impl eframe::App for MyApp {
             ui.add(egui::Checkbox::new(&mut self.is_number_second, "is number second?"));
             ui.add(egui::Checkbox::new(&mut self.is_number_last, "is number last?"));
 
-            if ui.button("Check Files").clicked() {
-                btn_check_files(&self.json_paths)
-            }
-            if ui.button("Show Folder Files").clicked() {
-                btn_show_folder_files(&self.user_path);
-            }
-            if ui.button("Rename Encodes").clicked() {
-                btn_rename_encoding(&self.user_path, &self.name_enc, self.is_number_first, self.is_number_second, self.is_number_last);
-            }
-            ui.vertical(|ui| {
+            ui.add_space(30.0);
+
+            ui.horizontal(|ui| {
+                if ui.button("Check Files").clicked() {
+                    btn_check_files(&self.json_paths)
+                }
+                if ui.button("Show Folder Files").clicked() {
+                    btn_show_folder_files(&self.user_path);
+                }
+            });
+
+            ui.add_space(30.0);
+
+            ui.horizontal(|ui| {
                 let name_label = ui.label("Encoder_name, Res");
-                ui.text_edit_multiline(&mut self.name_enc).labelled_by(name_label.id);
+                ui.text_edit_singleline(&mut self.name_enc).labelled_by(name_label.id);
+                if ui.button("Rename Encodes").clicked() {
+                    btn_rename_encoding(&self.user_path, &self.name_enc, self.is_number_first, self.is_number_second, self.is_number_last);
+                }
             });
         });
     }
