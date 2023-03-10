@@ -4,4 +4,4 @@ Renaming files for plex/jellyfin
 
 also checking files naming
 
-![Alt text](/screenshots/Gui.png?raw=true "")
+![Alt text](/screenshots/Gui.jpg?raw=true "")
