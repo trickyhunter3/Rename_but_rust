@@ -140,6 +140,26 @@ impl eframe::App for MyApp {
             ui.add(egui::Checkbox::new(&mut self.is_number_second, "is number second?"));
             ui.add(egui::Checkbox::new(&mut self.is_number_last, "is number last?"));
 
+            ui.add_space(15.0);
+
+            if ui.button("Rename To Numbers").clicked() {
+                let slash_seperator = self.user_path.split('\n');
+                let slash_vec: Vec<&str> = slash_seperator.collect();
+                for i in slash_vec {
+                    extract::iter_rename_into_number(
+                        i,
+                        self.is_number_first,
+                        self.is_number_second,
+                        self.is_number_last
+                    );
+                    println!("---------------------------------------------------");
+                }
+            }
+
+            if ui.button("Subtract numbers").clicked() {
+                println!()
+            }
+
             ui.add_space(30.0);
 
             ui.horizontal(|ui| {

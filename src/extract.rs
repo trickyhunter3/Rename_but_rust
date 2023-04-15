@@ -49,7 +49,7 @@ pub fn iter_rename_files(folder_path: &str, is_number_first: bool, is_number_sec
             let full_file_name = current_entry.path().to_str().unwrap();
             let file_name = current_entry.file_name().to_str().unwrap();
             let series_name_and_season: Vec<&str>  = get_series_name_and_season(current_entry.path().to_str().unwrap(), 3);
-            let episode_number = extract_number_from_string_v2(numbers_hashmap.clone(), file_name, is_number_first, is_number_second, is_number_last);
+            let episode_number = extract_number_from_string_v2(&numbers_hashmap, file_name, is_number_first, is_number_second, is_number_last);
             let season_number = extract_season_number(series_name_and_season[1]);
             let file_extention = get_file_extention(file_name);
             let season_helper = helper_create(season_number, "S".to_string());
@@ -104,7 +104,7 @@ pub fn iter_rename_encodes(folder_path: &str, name_enc: &Vec<&str>, is_number_fi
             let full_file_name = current_entry.path().to_str().unwrap();
             let file_name = current_entry.file_name().to_str().unwrap();
             let series_name_and_season: Vec<&str>  = get_series_name_and_season(current_entry.path().to_str().unwrap(), 3);
-            let episode_number = extract_number_from_string_v2(numbers_hashmap.clone(), file_name, is_number_first, is_number_second, is_number_last);
+            let episode_number = extract_number_from_string_v2(&numbers_hashmap, file_name, is_number_first, is_number_second, is_number_last);
             let season_number = extract_season_number(series_name_and_season[1]);
             let file_extention = get_file_extention(file_name);
             let season_helper = helper_create(season_number, "S".to_string());
@@ -126,6 +126,45 @@ pub fn iter_rename_encodes(folder_path: &str, name_enc: &Vec<&str>, is_number_fi
     }
 }
 
+pub fn iter_rename_into_number(folder_path: &str, is_number_first: bool, is_number_second: bool, is_number_last: bool){
+    if WalkDir::new(folder_path).into_iter().count() <= 1 {
+        println!("Folder is empty/non existent");
+        return;
+    }
+
+    let walker = WalkDir::new(folder_path).into_iter();
+    let numbers_hashmap = create_hashmap_from_names_in_folder(folder_path);
+    for entry in walker.filter_entry(|e| !is_hidden(e)){
+        let current_entry = entry.unwrap();
+
+        if !current_entry.file_type().is_dir(){
+            let full_file_name = current_entry.path().to_str().unwrap();
+            let file_name = current_entry.file_name().to_str().unwrap();
+            let episode_number = extract_number_from_string_v2(&numbers_hashmap, file_name, is_number_first, is_number_second, is_number_last);
+            let file_extention = get_file_extention(file_name);
+
+            if !filter_extention(file_extention){
+                if file_is_safe_to_change(current_entry.depth()){
+                    rename_file_into_number(full_file_name, file_name, episode_number, file_extention);
+                }
+            }
+        }
+    }
+}
+
+fn rename_file_into_number(full_file_name: &str, file_name: &str, episode_number: i32, file_extention: &str){
+    let file_path = get_file_path_no_name(full_file_name);
+    let final_name: String = file_path + &episode_number.to_string() + &".".to_string() + file_extention;
+    let final_name_no_path: String = episode_number.to_string() + &".".to_string() + file_extention;
+    if full_file_name != final_name{
+        println!("\"{}\" -> \"{}\"", file_name, final_name_no_path);
+        fs::rename(full_file_name, final_name).unwrap();
+    }
+    else{
+        println!("\"{}\" is already a correct name", file_name);
+    }
+}
+
 fn file_is_safe_to_change(file_depth: usize) -> bool{
     if file_depth == 1{
         return true;
@@ -134,7 +173,7 @@ fn file_is_safe_to_change(file_depth: usize) -> bool{
     return  false;
 }
 
-fn extract_number_from_string_v2(numbers_hashmap: HashMap<String, i32>, file_name: &str, is_number_first: bool, is_number_second: bool, is_number_last: bool) -> i32{
+fn extract_number_from_string_v2(numbers_hashmap: &HashMap<String, i32>, file_name: &str, is_number_first: bool, is_number_second: bool, is_number_last: bool) -> i32{
     /*
         how works:
         takes all the files in the folder
@@ -203,8 +242,7 @@ fn create_hashmap_from_names_in_folder(folder_path: &str) -> HashMap<String, i32
                 }
                 else {
                     //found this number already so increase the times that i saw it
-                    let mut number_from_key_value = *(numbers_hashmap.get(numbers_in_array[j].as_str()).unwrap());
-                    number_from_key_value = number_from_key_value + 1;//still learning rust sorry
+                    let number_from_key_value = (*(numbers_hashmap.get(numbers_in_array[j].as_str()).unwrap())) + 1;//still learning rust sorry
                     numbers_hashmap.insert(numbers_in_array[j].as_str().to_string(), number_from_key_value);
                 }
             }
@@ -213,7 +251,6 @@ fn create_hashmap_from_names_in_folder(folder_path: &str) -> HashMap<String, i32
 
     return numbers_hashmap;
 }
-
 
 fn rename_file(full_file_name: &str, file_name: &str, series_name: &str, season_helper: String, season_number: i32, episode_helper: String, episode_number: i32, subtitle_helper: &str, file_extention: &str){
     let file_path = get_file_path_no_name(full_file_name);
@@ -359,8 +396,6 @@ fn is_file_name_valid(file_name: &str, series_name: &str, season_number: i32, ep
 
     return is_name_format_correct(file_name, series_name, season_number, episode_number, file_extention, season_helper, episode_helper, subtitle_helper);
 }
-
-
 
 
 #[cfg(test)]
