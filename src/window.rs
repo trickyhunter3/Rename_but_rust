@@ -15,7 +15,7 @@ pub fn init_window() {
     eframe::run_native(
         "Rename",
         options,
-        Box::new(|_cc| Box::new(MyApp::default()))
+        Box::new(|_cc| Box::<MyApp>::default())
     );
 }
 
@@ -66,24 +66,26 @@ fn get_json() -> Vec<String> {
     };
     let comma_seperator: Vec<&str> = json_names_value.split(',').collect();
     for i in comma_seperator {
-        let current_value = json_values[i].as_str();
-        if current_value.is_some() {
-            final_vec.push(current_value.unwrap().to_string());
-        } else {
+        let current_value = if json_values[i].as_str().is_some() {
+            json_values[i].as_str()
+        } 
+        else {
             println!("\"{}\" was not found inside \"paths.json\"", i);
-        }
+            continue;
+        };
+        final_vec.push(current_value.unwrap().to_string());
     }
-    return final_vec;
+    final_vec
 }
 
 fn get_file_path_no_name(full_name: String) -> String {
     let mut final_string: String = "".to_string();
     let slash_seperator: Vec<&str> = full_name.split('\\').collect();
 
-    for i in 0..slash_seperator.len() - 1 {
-        final_string = final_string + &slash_seperator[i].to_string() + &"\\".to_string();
+    for i in slash_seperator.iter().take(slash_seperator.len() - 1) {
+        final_string = final_string + i + "\\";
     }
-    return final_string;
+    final_string
 }
 
 fn extract_the_directories(wrong_names: Vec<Vec<String>>) {
@@ -185,7 +187,7 @@ impl eframe::App for MyApp {
 }
 
 fn btn_check_files(json_paths: &Vec<String>) {
-    if json_paths.len() == 0 {
+    if json_paths.is_empty() {
         println!("There are no folders to check\ncheck if the json file formated correctly");
         return;
     }
@@ -218,6 +220,6 @@ fn btn_show_folder_files(folder_path: &str){
 }
 
 fn btn_rename_encoding(folder_path: &str, name_enc: &str, is_number_first: bool, is_number_second: bool, is_number_last: bool){
-    let name_enc_vec: Vec<&str> = name_enc.split(",").collect();
+    let name_enc_vec: Vec<&str> = name_enc.split(',').collect();
     extract::iter_rename_encodes(folder_path, &name_enc_vec, is_number_first, is_number_second, is_number_last);
 }

@@ -2,7 +2,7 @@ mod extract;
 mod window;
 
 fn main() {
-    println!("");//init console
+    println!();//init console
     window::init_window();
 }
 
