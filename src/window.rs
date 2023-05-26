@@ -16,7 +16,7 @@ pub fn init_window() {
         "Rename",
         options,
         Box::new(|_cc| Box::<MyApp>::default())
-    );
+    ).unwrap();
 }
 
 struct MyApp {
