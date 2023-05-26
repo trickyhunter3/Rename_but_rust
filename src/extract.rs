@@ -147,8 +147,13 @@ fn rename_file_into_number(full_file_name: &str, file_name: &str, episode_number
     let final_name: String = file_path + &episode_number.to_string() + "." + file_extention;
     let final_name_no_path: String = episode_number.to_string() + "." + file_extention;
     if full_file_name != final_name{
-        println!("\"{}\" -> \"{}\"", file_name, final_name_no_path);
-        fs::rename(full_file_name, final_name).unwrap();
+        if !std::path::Path::new(&final_name).exists(){
+            println!("\"{}\" -> \"{}\"", file_name, final_name_no_path);
+            fs::rename(full_file_name, final_name).unwrap();
+        }
+        else{
+            println!("Overwrite protection on: \"{}\"", file_name);
+        }
     }
     else{
         println!("\"{}\" is already a correct name", file_name);
