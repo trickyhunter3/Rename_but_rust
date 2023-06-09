@@ -252,8 +252,13 @@ fn rename_file(full_file_name: &str, file_name: &str, series_name: &str, season_
     let final_name: String = file_path + series_name + " - " + &season_helper + &season_number.to_string() + &episode_helper + &episode_number.to_string() + subtitle_helper + "." + file_extention;
     let final_name_no_path: String = series_name.to_string() + " - " + &season_helper + &season_number.to_string() + &episode_helper + &episode_number.to_string() + subtitle_helper + "." + file_extention;
     if full_file_name != final_name{
-        println!("\"{}\" -> \"{}\"", file_name, final_name_no_path);
-        fs::rename(full_file_name, final_name).unwrap();
+        if !std::path::Path::new(&final_name).exists(){
+            println!("\"{}\" -> \"{}\"", file_name, final_name_no_path);
+            fs::rename(full_file_name, final_name).unwrap();
+        }
+        else{
+            println!("Overwrite protection on: \"{}\"", file_name);
+        }
     }
     else{
         println!("\"{}\" is already a correct name", file_name);
@@ -265,8 +270,13 @@ fn rename_file_encoded(full_file_name: &str, file_name: &str, series_name: &str,
     let final_name: String = file_path + name_enc[0] + series_name + " - " + &season_helper + &season_number.to_string() + &episode_helper + &episode_number.to_string() + subtitle_helper + name_enc[1] + "." + file_extention;
     let final_name_no_path: String = name_enc[0].to_string() + series_name + " - " + &season_helper + &season_number.to_string() + &episode_helper + &episode_number.to_string() + subtitle_helper + name_enc[1] + "." + file_extention;
     if full_file_name != final_name{
-        println!("\"{}\" -> \"{}\"", file_name, final_name_no_path);
-        fs::rename(full_file_name, final_name).unwrap();
+        if !std::path::Path::new(&final_name).exists(){
+            println!("\"{}\" -> \"{}\"", file_name, final_name_no_path);
+            fs::rename(full_file_name, final_name).unwrap();
+        }
+        else{
+            println!("Overwrite protection on: \"{}\"", file_name);
+        }
     }
     else{
         println!("\"{}\" is already a correct name", file_name);
