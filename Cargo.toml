@@ -9,6 +9,6 @@ edition = "2021"
 
 regex = "1.9.1"
 walkdir = "2.3.3"
-egui = "0.22.0"
-eframe = "0.22.0"
+egui = "0.24.1"
+eframe = "0.24.1"
 serde_json = "1.0.100"

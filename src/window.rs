@@ -9,9 +9,10 @@ use super::*; //extract library inside
 
 pub fn init_window() {
     let options = eframe::NativeOptions {
-        initial_window_size: Some(egui::vec2(640.0, 480.0)),
+        viewport: egui::ViewportBuilder::default().with_inner_size([640.0, 480.0]),
         ..Default::default()
     };
+
     eframe::run_native(
         "Rename",
         options,
